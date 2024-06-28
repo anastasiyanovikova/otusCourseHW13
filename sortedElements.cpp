@@ -42,7 +42,15 @@ void sortItemsVector (sortedElementsModel::sortOrder order, std::vector < std::v
     for (auto v: vector_items)
         sortItems (*v, order);
 }
-
+standardItem::standardItem(): m_data("")
+{
+}
+standardItem::standardItem(std::string value):m_data(value)
+{}
+std::string standardItem::getData() const
+{
+    return m_data;
+}
 sortedElementsModel::sortedElementsModel(){}
 
 bool sortedElementsModel::addItemsVector(std::vector<standardItem*> items)
