@@ -6,8 +6,9 @@
 #include<string>
 #include <math.h>
 
-//typedef int SORT_TYPE;
-//typedef std::string SORT_TYPE;
+/**
+ * @brief The standardItem class - класс элемента для сортировки
+ */
 class standardItem
 {
 public:
@@ -16,19 +17,24 @@ public:
 
     std::string getData() const;
 
-    //bool operator<(const standardItem& other) const;
-    //bool operator<=(const standardItem& other) const;
-    //bool operator==(const standardItem& other) const;
 private:
     std::string m_data;
 };
 
+/**
+ * @brief operator < - Опреатор сравнения меньше
+ * @param a - левый элемент для сравнения
+ * @param b - правый элемент для сравнения
+ * @return true, если a < b
+ */
 inline bool operator<(const standardItem& a, const standardItem&b)
 {
     return a.getData() < b.getData();
 }
 
 typedef standardItem* SORT_TYPE;
+
+/// Реализация алгоритма timsort
 
 struct segment {
   int first_index_in_segment; // индекс первого элемента
@@ -46,7 +52,7 @@ inline int get_min_run(int n) {
   return n + r;
 }
 
-/* Function used to do a binary search for binary insertion sort */
+/// Бинарный поиск для вставки
 inline size_t  BinaryInsertionFind(std::vector<SORT_TYPE> &dst, const SORT_TYPE x, const size_t begin,
   const size_t size) {
   size_t l, c, r;
@@ -99,6 +105,7 @@ inline size_t  BinaryInsertionFind(std::vector<SORT_TYPE> &dst, const SORT_TYPE 
   }
 }
 
+/// Сортировка бинарными вставками
 inline void BinaryInsertionSortStart(std::vector<SORT_TYPE> &dst, const size_t start, const size_t size) {
   size_t i;
 
@@ -111,14 +118,14 @@ inline void BinaryInsertionSortStart(std::vector<SORT_TYPE> &dst, const size_t s
       continue;
     }
 
-    /* Else we need to find the right place, shift everything over, and squeeze in */
     x = dst.at(i);
     location = BinaryInsertionFind(dst, x, start, i);
 
     for (j = i - 1; j >= location; j--) {
       dst.at(j + 1) = dst.at(j);
 
-      if (j == 0) { /* check edge case because j is unsigned */
+      if (j == 0)
+      {
         break;
       }
     }
@@ -127,6 +134,7 @@ inline void BinaryInsertionSortStart(std::vector<SORT_TYPE> &dst, const size_t s
   }
 }
 
+/// Функция галлопа (если несколько элемнетов при слиянии были взяты из одного массива, то предполагаем, что и дальше элементы будут взяты из того же массива, поэтому проверяем на расстоянии)
 inline void galloptmp(std::vector<SORT_TYPE> &mas, std::vector<SORT_TYPE> &tmp, int &posF, int &posS, int &pos, int lastF, int lastS)
 {
   if(lastS < 0)
@@ -152,6 +160,7 @@ inline void galloptmp(std::vector<SORT_TYPE> &mas, std::vector<SORT_TYPE> &tmp, 
   posF = i_prev;
 }
 
+/// Функция галлопа (если несколько элемнетов при слиянии были взяты из одного массива, то предполагаем, что и дальше элементы будут взяты из того же массива, поэтому проверяем на расстоянии)
 inline void gallopmas(std::vector<SORT_TYPE> &mas, std::vector<SORT_TYPE> &tmp, int &posF, int &posS, int &pos, int lastF, int lastS)
 {
   if(lastF < 0)
@@ -176,6 +185,7 @@ inline void gallopmas(std::vector<SORT_TYPE> &mas, std::vector<SORT_TYPE> &tmp, 
   posS = i_prev;
 }
 
+/// Слияние отсортированных частей массива
 inline void merge(std::vector<SORT_TYPE> &mas, std::vector<segment> &seg, int seg_begin)
 {
   int firstSeg = seg_begin;
@@ -215,6 +225,7 @@ inline void merge(std::vector<SORT_TYPE> &mas, std::vector<segment> &seg, int se
   }
   copy(tmp.begin() + posF, tmp.begin() + lastF, mas.begin() + pos + 1);
 }
+/// Проверить возможность слияния
 inline void try_merge(std::vector<SORT_TYPE> &mas, std::vector<segment> &seg)
 {
   if (seg.size() == 2)
@@ -247,6 +258,8 @@ inline void try_merge(std::vector<SORT_TYPE> &mas, std::vector<segment> &seg)
 
   }
 }
+
+/// Поиск упорядоченных частей в массиве
 inline int findSort(std::vector<SORT_TYPE> &mas, int first)
 {
   int begin = first;
@@ -282,7 +295,7 @@ inline int findSort(std::vector<SORT_TYPE> &mas, int first)
   return first;
 }
 
-
+/// Алгоритм сортировки TimSort
 inline void TimSort(std::vector<SORT_TYPE> &mas)
 {
   int array_size = mas.size();
