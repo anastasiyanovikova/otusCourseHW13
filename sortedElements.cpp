@@ -7,14 +7,14 @@
  * @param items - Набор массивов
  * @param order - По возрастанию/ по убыванию
  */
-void sortItems (std::vector < standardItem* >& items, sortedElementsModel::sortOrder order)
+void sortItems (std::vector < std::string * >& items, sortedElementsModel::sortOrder order)
 {
-     auto funcLess = [](standardItem* a, standardItem* b){
-        return a < b;
+     auto funcLess = [](std::string* a, std::string* b){
+        return *a < *b;
     };
 
-    auto funcGrater = [](standardItem* a, standardItem* b){
-        return b < a;
+    auto funcGrater = [](std::string *a, std::string* b){
+        return *b < *a;
     };
 
     if(items.size() > 10000)
@@ -27,9 +27,12 @@ void sortItems (std::vector < standardItem* >& items, sortedElementsModel::sortO
     }
     else
     {
-        auto compare = order == sortedElementsModel::ascending ? funcLess : funcGrater;
-        std::stable_sort(items.begin (), items.end (), compare);
-        std::cout << "sort end"<<std::endl;
+        //auto compare = order == sortedElementsModel::ascending ? funcLess : funcGrater;
+        //std::stable_sort (items.begin (), items.end (), compare);
+        if(order == sortedElementsModel::ascending)
+          std::stable_sort(items.begin (), items.end (), funcLess);
+        else
+          std::stable_sort (items.begin (), items.end (), funcGrater);
     }  
 }
 /**
@@ -37,48 +40,40 @@ void sortItems (std::vector < standardItem* >& items, sortedElementsModel::sortO
  * @param order - По возрастанию, по убыванию
  * @param vector_items - Массив для сортировки
  */
-void sortItemsVector (sortedElementsModel::sortOrder order, std::vector < std::vector < standardItem* >* >  &vector_items)
+void sortItemsVector (sortedElementsModel::sortOrder order, std::vector < std::vector < std::string* >* >  &vector_items)
 {
     for (auto v: vector_items)
         sortItems (*v, order);
 }
-standardItem::standardItem(): m_data("")
-{
-}
-standardItem::standardItem(std::string value):m_data(value)
-{}
-std::string standardItem::getData() const
-{
-    return m_data;
-}
+
 sortedElementsModel::sortedElementsModel(){}
 
-bool sortedElementsModel::addItemsVector(std::vector<standardItem*> items)
+bool sortedElementsModel::addItemsVector(std::vector<std::vector<std::string* >*> items)
 {
-    if(items.size() > 0)
-        m_sortItemsQueue.push_back(items);
+    //if(items.size() > 0)
+  m_sortItemsQueue = items; // push_back(&items);
     return true;
 }
 
 bool sortedElementsModel::sort(sortOrder order)
 {
     /// количество элементов в одном потоке, необходимое для создания потока
-    static const uint item_amount_for_one_thread = 1000;
+    static const size_t item_amount_for_one_thread = 1000;
     /// Функция определения числа дополнительных потоков
-    auto calc_thread_amount = [] (const uint items_amount,
-                                const uint     item_amount_for_one_thread,
-                                const uint     sort_items_amount,
+    auto calc_thread_amount = [] (const size_t items_amount,
+                                const size_t     item_amount_for_one_thread,
+                                const size_t     sort_items_amount,
                                 const bool     small_vector_of_items_is_empty, 
                                 const bool     small_vector_of_items_is_big)
     {
-        static unsigned int ideal_thread_amount = std::thread::hardware_concurrency();
-        std::cout << ideal_thread_amount<< " - idral thread" << std::endl;
-        uint res;
+        static size_t ideal_thread_amount = std::thread::hardware_concurrency();
+        std::cout << " ideal_thread_amount = " << ideal_thread_amount << std::endl;
+        size_t res;
         if (small_vector_of_items_is_big)
           res = ideal_thread_amount;
         else
         {
-          res = std::min (std::min (ideal_thread_amount, sort_items_amount), static_cast <uint> (items_amount / item_amount_for_one_thread));
+          res = std::min (std::min (ideal_thread_amount, sort_items_amount), static_cast <size_t> (items_amount / item_amount_for_one_thread));
           if (!small_vector_of_items_is_empty  &&  res > 1)
             res -= 1;
         }
@@ -86,8 +81,8 @@ bool sortedElementsModel::sort(sortOrder order)
         return res;
     };
 
-      auto item_amount_comparator = [] (const std::pair < int, std::vector < std::vector < standardItem* >* > >& v1,
-                                        const std::pair < int, std::vector < std::vector < standardItem* >* > >& v2)
+      auto item_amount_comparator = [] (const std::pair < int, std::vector < std::vector < std::string* >* > >& v1,
+                                        const std::pair < int, std::vector < std::vector < std::string*>* > >& v2)
       {
         return v1.first < v2.first;
       };
@@ -96,17 +91,13 @@ bool sortedElementsModel::sort(sortOrder order)
     if (!m_sortItemsQueue.empty())
     {
         /// массивы, которые могут сортироваться параллельно - количество элементов в массиве больше 300
-        std::vector < std::vector < standardItem* >* > sort_items_paral;
+        std::vector < std::vector < std::string* > * > sort_items_paral;
         /// небольшие массивы, которые будут сортиооваться в одном потоке
-        std::vector < std::vector < standardItem* >* > small_vectors_of_items;
+        std::vector < std::vector < std::string* >* > small_vectors_of_items;
         uint32_t items_amount = 0;
-        uint reserve_size = 0;
-
+        
         /// определим общее число элементов в массивах
-        for (auto sq_it : m_sortItemsQueue)
-        {
-        reserve_size += sq_it.size();
-        }
+        size_t reserve_size = m_sortItemsQueue.size ();
         sort_items_paral.reserve (reserve_size);
         small_vectors_of_items.reserve (reserve_size);
 
@@ -114,12 +105,12 @@ bool sortedElementsModel::sort(sortOrder order)
         static const int small_mass_size = 300;
         for (auto sq_it : m_sortItemsQueue)
         {
-            if(sq_it.size() <= small_mass_size)
-                small_vectors_of_items.push_back(&sq_it);
+            if(sq_it->size() <= small_mass_size)
+                small_vectors_of_items.push_back(sq_it);
             else
             {
-                sort_items_paral.push_back(&sq_it);
-                items_amount += sq_it.size();
+                sort_items_paral.push_back(sq_it);
+                items_amount += sq_it->size();
             }
         }
 
@@ -142,7 +133,7 @@ bool sortedElementsModel::sort(sortOrder order)
         {
             /// количество элементов для одного потока
             const uint32_t one_thread_size = items_amount / number_of_additional_threads;
-            std::vector < std::pair < int, std::vector < std::vector < standardItem* >* > > > items_in_one_thread;
+            std::vector < std::pair < int, std::vector < std::vector < std::string *>*> > > items_in_one_thread;
             items_in_one_thread.reserve (number_of_additional_threads);
 
             size_t current_thread = 0;
@@ -283,25 +274,6 @@ bool sortedElementsModel::sort(sortOrder order)
 
             for(auto& th: theads)
                 th.join();
-
-            std::cout << items_in_one_thread.size() << std::endl;
-            for(auto vec: items_in_one_thread)
-            {
-                for(auto res: vec.second)
-                {
-                    std::cout <<"****************"<<std::endl;
-                    for(auto itemr: *res)
-                        std::cout << itemr->getData()<<std::endl;
-                }
-            }
-            std::cout << small_vectors_of_items.size() << std::endl;
-
-            for(auto vec: small_vectors_of_items)
-            {
-                std::cout <<"****************"<<std::endl;
-                    for(auto itemr: *vec)
-                        std::cout << itemr->getData()<<std::endl;
-            }
         }
     }
     return true;
@@ -315,9 +287,53 @@ void sortedElementsModel::printSortElements()
     {
         std::cout << i << " ***************************************************************"<<std::endl;
         ++i;
-        for(auto item: vec)
+        for(auto item: *vec)
         {
-            std::cout << item->getData()<<std::endl;
+            std::cout << *item <<std::endl;
         }
     }
 }
+
+bool sortedElementsModel::checkIsSorted (sortOrder order)
+{
+  if (order == sortOrder::ascending)
+  {
+    for (auto vec : m_sortItemsQueue)
+    {
+      for (size_t i = 0; i <  vec->size() - 1; i++)
+      {
+        if (*(vec->at (i)) > *(vec->at (i + 1)))
+        {
+          std::cout << "error in sorting" << std::endl;
+          for (auto item : *vec)
+          {
+            std::cout << *item << std::endl;
+          }
+          return false;
+        }
+      }
+    }
+  }
+  else
+  {
+    for (auto vec : m_sortItemsQueue)
+    {
+      for (size_t i = 0; i < vec->size () - 1; i++)
+      {
+        if (*(vec->at (i)) < *(vec->at (i + 1)))
+        {
+          std::cout << "error in sorting" << std::endl;
+
+          for (auto item : *vec)
+          {
+            std::cout << *item << std::endl;
+          }
+
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+

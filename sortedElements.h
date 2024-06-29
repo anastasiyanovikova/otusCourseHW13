@@ -19,7 +19,7 @@ public:
      * @param items - Массив элементов
      * @return
      */
-    bool addItemsVector(std::vector<standardItem*> items);
+    bool addItemsVector(std::vector<std::vector<std::string* >*> items);
     /**
      * @brief sort - Сортировать массивы
      * @param order - Порядок сортировки (по возрастанию или по убыванию)
@@ -27,9 +27,14 @@ public:
      */
     bool sort(sortOrder order = sortOrder::ascending);
     /**
-     * @brief printSortElements - Напечатать элементы
+     * @brief printSortElements - Напечатать отсортированные элементы
      */
     void printSortElements();
-private:
-    std::vector<std::vector<standardItem*>> m_sortItemsQueue;    
+
+    /**
+    * @brief printSortElements - Проверить отсортированы ли массивы
+    */
+    bool checkIsSorted (sortOrder order = sortOrder::ascending);
+
+    std::vector<std::vector<std::string* >* > m_sortItemsQueue;
 };

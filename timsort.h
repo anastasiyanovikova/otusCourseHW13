@@ -6,33 +6,7 @@
 #include<string>
 #include <math.h>
 
-/**
- * @brief The standardItem class - класс элемента для сортировки
- */
-class standardItem
-{
-public:
-    standardItem();
-    standardItem(std::string value);
-
-    std::string getData() const;
-
-private:
-    std::string m_data;
-};
-
-/**
- * @brief operator < - Опреатор сравнения меньше
- * @param a - левый элемент для сравнения
- * @param b - правый элемент для сравнения
- * @return true, если a < b
- */
-inline bool operator<(const standardItem& a, const standardItem&b)
-{
-    return a.getData() < b.getData();
-}
-
-typedef standardItem* SORT_TYPE;
+typedef std::string* SORT_TYPE;
 
 /// Реализация алгоритма timsort
 
